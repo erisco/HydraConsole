@@ -10,6 +10,56 @@ use ML\JsonLD\JsonLD;
 use ML\JsonLD\Processor;
 
 
+
+//
+// Validate that the URL is allowed to be proxied.
+//
+
+/**
+ * @return array
+ * @throws Exception
+ */
+function getAllowedHosts() {
+  $configFile = __DIR__ . DIRECTORY_SEPARATOR . 'proxy.config.php';
+  include $configFile;
+  if (isset($allowedHosts) && \is_array($allowedHosts)) {
+    return $allowedHosts;
+  }
+  else {
+    throw new \Exception('Must define array $allowedHosts in ' . $configFile);
+  }
+}
+
+/**
+ * @param array $allowedHosts
+ * @param string $url
+ * @return bool
+ */
+function isUrlAllowed(array $allowedHosts, $url) {
+  return \array_reduce(
+    \array_map(
+      function ($allowedHost) use ($url) {
+        return $allowedHost === \parse_url($url, PHP_URL_HOST);
+      },
+      $allowedHosts
+    ),
+    function ($carry, $item) {
+      return $carry || $item;
+    },
+    false
+  );
+}
+
+$allowedHosts = getAllowedHosts();
+if (!\isUrlAllowed($allowedHosts, $_GET['url'])) {
+  \header('HTTP/1.1 403 Forbidden');
+  \header('Content-Type: text/plain');
+  echo 'This proxy will only accept URLs for these hosts: ', implode(',', $allowedHosts);
+  die();
+}
+
+
+
 // Mimic apache_request_headers() if not present (adapted from PHP doc)
 if(!function_exists('apache_request_headers')) {
   function apache_request_headers() {
@@ -69,7 +119,6 @@ function parseContextLinkHeaders(array $values, IRI $baseIri)
 
   return array_values(array_unique($contexts));
 }
-
 
 $options = new \stdClass();
 $options->base = $_GET['url'];

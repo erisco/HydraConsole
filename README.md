@@ -24,6 +24,9 @@ and install all it's dependencies:
 
     php composer.phar create-project -s dev ml/hydra-console path/to/install
 
+Copy `default-proxy.config.php` to `proxy.config.php` and edit the copy to
+configure the hosts which Hydra Console will be allowed to access.
+
 That's all. Just fire up your browser and point it to
 
     http://localhost/path/to/install/
