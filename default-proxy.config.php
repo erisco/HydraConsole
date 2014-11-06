@@ -3,7 +3,7 @@
 //
 // The list of allowed URL prefixes.
 //
-$urlFilter = array(
+$allowedHosts = array(
   'http://www.example.com'
 );
 
