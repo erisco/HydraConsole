@@ -3,7 +3,7 @@
 //
 // The list of allowed hosts.
 //
-$urlFilter = array(
+$allowedHosts = array(
   'www.example.com'
 );
 
