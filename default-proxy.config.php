@@ -1,9 +1,9 @@
 <?php
 
 //
-// The list of allowed URL prefixes.
+// The list of allowed hosts.
 //
 $allowedHosts = array(
-  'http://www.example.com'
+  'www.example.com'
 );
 
