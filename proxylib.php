@@ -575,28 +575,36 @@ class AjaxProxy
      */
     protected function _generateProxyRequestHeaders($as_string = FALSE)
     {
-        $headers = array();
-        $headers[] = 'Content-Type: ' . $this->_requestContentType;
+        $headers = $this->_rawHeaders;
+        $headers['Content-Type'] = $this->_requestContentType;
 
         if ($this->_requestAuthorization) {
-            $headers[] = 'Authorization: ' . $this->_requestAuthorization;
+            $headers['Authorization'] = $this->_requestAuthorization;
         }
 
         if ($this->_requestAccept) {
-            $headers[] = 'Accept: ' . $this->_requestAccept;
+            $headers['Accept'] = $this->_requestAccept;
+        }
+
+        $headerList = array();
+        foreach ($headers as $name => $value) {
+          if (\in_array($name, array('Cookie', 'User-Agent', 'Accept-Encoding'))) {
+            continue;
+          }
+          $headerList[] = $name . ': ' . $value;
         }
 
         if($as_string)
         {
             $data = "";
-            foreach($headers as $value)
+            foreach($headerList as $value)
                 if($value)
                     $data .= "$value\n";
 
-            $headers = $data;
+            return $data;
         }
 
-        return $headers;
+        return $headerList;
     }
 
     /**

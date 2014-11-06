@@ -9,7 +9,6 @@ use ML\IRI\IRI;
 use ML\JsonLD\JsonLD;
 use ML\JsonLD\Processor;
 
-
 // Mimic apache_request_headers() if not present (adapted from PHP doc)
 if(!function_exists('apache_request_headers')) {
   function apache_request_headers() {
@@ -132,6 +131,7 @@ $debugExpansion = function(&$document, &$headers)
 
     die();
   }
+
 };
 
 $frameApiDocumentation = function(&$document, &$headers)
@@ -218,6 +218,7 @@ $frameApiDocumentation = function(&$document, &$headers)
     die();
   }
 };
+
 
 
 $proxy = new AjaxProxy();

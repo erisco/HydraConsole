@@ -542,14 +542,86 @@
 
   });
 
+  Hydra.Models.HttpHeaderModal = Backbone.Model.extend({
+
+    initialize: function () {
+      this.set({headers: {}});
+    }
+
+  });
+
+  Hydra.Views.HttpHeaderModal = Backbone.View.extend({
+
+    dialog: $("#httpHeaderModal"),
+    template: _.template($('#httpHeaderModal-template').html()),
+    rowTemplate: _.template($("#httpHeaderModal-row").html()),
+
+    initialize: function() {
+      $("#httpHeaderModal-template").remove();
+      $("#httpHeaderModal-row").remove();
+    },
+
+    render: function() {
+
+      var self = this;
+
+      this.dialog.html(this.template(this.model.toJSON()));
+
+      var body = $("#httpHeaderModal .modal-body");
+      self.load(body);
+      self.addRow(body, '', '');
+
+      self.dialog.on('hide', function () { self.save(body) });
+
+    },
+
+    addRow: function(body, name, value) {
+      var self = this;
+      body.append(self.rowTemplate({name: name, value: value}));
+      var row = body.find('.row-form:last');
+      row.find('.row-delete').click(function () {
+        row.remove();
+      });
+      row.find('input').focus(function () {
+        if (body.find('.row-form:last')[0] == row[0]) {
+          self.addRow(body, '', '');
+        }
+      });
+    },
+
+    save: function(body) {
+      var headers = {};
+      body.find('.row-form').each(function (i, e) {
+        var name = $(e).find('input[name="name"]').val();
+        var value = $(e).find('input[name="value"]').val();
+        if (name) {
+          headers[name] = value;
+        }
+      });
+      this.model.set({headers: headers});
+    },
+
+    load: function(body) {
+      var headers = this.model.get('headers') || {};
+      for (var name in headers) {
+        this.addRow(body, name, headers[name]);
+      }
+    }
+
+  });
+
 
   Hydra.Client = {
     addressbar: new Hydra.Views.AddressBar(),
     documentation: {},
     response: {},
     operationsModal: { widget: $('#operationsModal') },
+    httpHeaderModal: { widget: $('#httpHeaderModal') },
 
     initialize: function() {
+
+      var self = this;
+
       $.ajaxSetup({
         headers: {
           'Accept': 'application/ld+json, application/json;q=0.1'
@@ -575,6 +647,17 @@
         documentation: this.documentation.model
       });
 
+      this.httpHeaderModal.model = new Hydra.Models.HttpHeaderModal();
+      this.httpHeaderModal.view = new Hydra.Views.HttpHeaderModal({
+        model: this.httpHeaderModal.model
+      });
+      this.httpHeaderModal.model.bind('change:headers', function (event) {
+        $(".http-header-count").text(Object.keys(self.httpHeaderModal.model.get('headers')).length + "");
+      });
+      this.httpHeaderModal.model.set({headers: {
+        'Accept': 'application/ld+json, application/json;q=0.1'
+      }});
+
       return this;
     },
 
@@ -587,9 +670,11 @@
 
       data = data || null;
 
+      var headers = self.httpHeaderModal.model.get('headers');
+
       $('#load').removeClass('btn-inverse');
 
-      self.invokeRequest(method, url, data).done(function(resource, textStatus, jqXHR) {
+      self.invokeRequest(method, url, data, headers).done(function(resource, textStatus, jqXHR) {
         //self.vent.trigger('response', { resource: resource });
         var linkHeaders = self.parseLinkHeader(jqXHR.getResponseHeader('Link'));
 
@@ -652,7 +737,7 @@
 
       var settings = {
         'type': method || 'GET',
-        'headers': headers || { 'Accept': 'application/ld+json, application/json;q=0.1' },
+        'headers': headers || {},
         'processData': false,
         'data': data || null,
         'dataType': 'text'
@@ -738,7 +823,13 @@
           showModal();
         }
       });
+    },
+
+    showHttpHeaderModal: function () {
+      this.httpHeaderModal.widget.modal('show');
+      this.httpHeaderModal.view.render();
     }
+
   };
 
   window.HydraClient = Hydra.Client.initialize();
@@ -769,6 +860,11 @@ $('#response').on("mouseleave", ".prop", function (event) {
     }
 
     event.stopPropagation();
+});
+
+$('#edit-http-headers').on('submit', function () {
+  window.HydraClient.showHttpHeaderModal();
+  return false;
 });
 
 
